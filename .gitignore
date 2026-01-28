@@ -1,0 +1,8 @@
+src/
+nimcache/
+*.paths
+*.exe
+*.dll
+*.so
+*.dylib
+*.out
