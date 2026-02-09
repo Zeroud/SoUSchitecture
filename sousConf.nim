@@ -115,21 +115,15 @@ proc getConfigPls*(): seq[settiBox] {.gcsafe.} =
       try:
          writeFile("src/sousSett.md","""# Telebot
 ## input
-* sticker
-
-* caption
-
-## answer
-__rate__ 1
-
-```json
-{"temperature": 0.8,}
+```pipeline
+concat[] prompt
+concat[] input
 ```
 
-```pipeline
-concat prompt
-concat memory
-concat input
+## answer
+
+```json
+{"temperature": 0.8, }
 ```
 
 # Init
@@ -142,11 +136,7 @@ __apiModel__
 __apiKey__ 
 
 # Memory
-__lenght__ 0
-
-__inCut__ 100
-
-__outCut__ 100""")
+__lenght__ 0""")
          echo "[УСПЕШНО ЗАПИСАНО] пожалуйста, впишите ключи и url в src/sousSett.md"
          return getConfigPls()
       except Exception as e:

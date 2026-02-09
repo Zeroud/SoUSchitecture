@@ -6,3 +6,4 @@ nimcache/
 *.so
 *.dylib
 *.out
+*.jsonl

@@ -7,7 +7,7 @@ let f8438 = open("src/.backup", fmAppend); f8438.close()
 
 let config = getConfigPls()
 
-proc updateHandler(bot: TeleBot, update: Update): Future[bool] {.async, gcsafe.} =  
+proc updateHandler(bot: TeleBot, update: Update): Future[bool] {.async, gcsafe.} =
   randomize() 
 
   let conf = getConfigPls()
@@ -46,7 +46,7 @@ proc updateHandler(bot: TeleBot, update: Update): Future[bool] {.async, gcsafe.}
       return true   
 
     if  update.message.replyToMessage != nil:   
-      if update.message.replyToMessage.fromUser.firstName != "Sous":   
+      if update.message.replyToMessage.fromUser.username != getMe(bot).await.username:   
         if rand(0..rate) != 0:   
           echo "[!] скип"   
           return true   
@@ -98,9 +98,9 @@ proc updateHandler(bot: TeleBot, update: Update): Future[bool] {.async, gcsafe.}
 
     var finalPrompt: seq[JsonNode] = @[]
     finalPrompt = exec[JsonNode](s = promptPipes.join("\n"), o = finalPrompt, 
-      (k: "prompt", w: @[ %*{"role":"user","content": text} ]), 
+      (k: "prompt", w: @[ %*{"role":"system","content": prompt} ]), 
       (k: "memory", w: makeMeHistory(memSous)) ,
-      (k: "input", w: @[ %*{"role":"system","content": prompt} ])
+      (k: "input", w: @[ %*{"role":"user","content": text} ])
     )
 
     var body = %*{   
@@ -185,7 +185,6 @@ proc starrt() =
     echo "[fall] poll"   
     sleep(5000) 
 
-  discard bot.logOut
   discard bot.close
 
   starrt()
