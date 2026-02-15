@@ -1,36 +1,45 @@
-import std/[json, net, sequtils, strutils], sousConf, telebot, strformat
+import std/[json, net, sequtils, strutils], sousConf, strformat
 
-proc inputDataCompile*(use: settiSeq, update: Update): string  =
-  if use.findIt(it == "sticker") != -1:   
-    if not update.message.sticker.isNil:
-      result &= fmt"[Стикер {update.message.sticker.emoji}] "
-  if use.findIt(it == "photo") != -1: 
-    if update.message.photo.len != 0:
-      result &= update.message.photo.mapIt(fmt"[Фото {it.fileSize}байт] ").join(", ")
-  if use.findIt(it == "video") != -1:   
-    if not update.message.video.isNil: 
-      result &= fmt"[Видео {update.message.video.fileName} {update.message.video.duration}сек {update.message.video.fileSize}байт {update.message.video.mimeType} ] "
-  if use.findIt(it == "audio") != -1:   
-    if not update.message.audio.isNil:
-      result &= fmt"[Звук {update.message.audio.title} {update.message.audio.duration}сек] "
-  if use.findIt(it == "document") != -1:   
-    if not update.message.document.isNil:
-      result &= fmt"[Файл {update.message.document.fileName} {update.message.document.fileSize}байт] "
-  if use.findIt(it == "voice") != -1:   
-    if not update.message.voice.isNil:
-      result &= fmt"[Голосовое сообщение {update.message.voice.duration}сек] "
-  if use.findIt(it == "gif") != -1:   
-    if not update.message.animation.isNil:
-      result &= fmt"[GIF {update.message.animation.fileName} {update.message.animation.mimeType}] "
-  if use.findIt(it == "videonote") != -1:   
-    if not update.message.videoNote.isNil:
-      result &= fmt"[Видеосообщение {update.message.videoNote.duration}сек] "
-  if use.findIt(it == "contact") != -1:   
-    if not update.message.contact.isNil:
-      result &= fmt"[Контакт {update.message.contact.firstName} {update.message.contact.lastName} {update.message.contact.phoneNumber}] "
-  if use.findIt(it == "caption") != -1:   
-    if update.message.caption != "":
-      result &= fmt" {update.message.caption} "
+proc inputDataCompile*(use: settiSeq, update: JsonNode): string =
+  if use.findIt(it == "sticker") != -1:
+    if update["message"].hasKey("sticker"):
+      result &= fmt"""[Стикер {update["message"]["sticker"]["emoji"].getStr}]"""
+  if use.findIt(it == "photo") != -1:
+    if update["message"].hasKey("photo") and update["message"]["photo"].len != 0:
+      result &= update["message"]["photo"].getElems.mapIt(fmt"""[Фото {it["fileSize"].getInt}байт] """).join(", ")
+  if use.findIt(it == "video") != -1:
+    if update["message"].hasKey("video"):
+      let v = update["message"]["video"]
+      result &= fmt"""[Видео {v["fileName"].getStr} {v["duration"].getInt}сек {v["fileSize"].getInt}байт {v["mimeType"].getStr} ] """
+  if use.findIt(it == "audio") != -1:
+    if update["message"].hasKey("audio"):
+      let a = update["message"]["audio"]
+      result &= fmt"""[Звук {a["title"].getStr} {a["duration"].getInt}сек] """
+  if use.findIt(it == "document") != -1:
+    if update["message"].hasKey("document"):
+      let d = update["message"]["document"]
+      result &= fmt"""[Файл {d["fileName"].getStr} {d["fileSize"].getInt}байт] """
+  if use.findIt(it == "voice") != -1:
+    if update["message"].hasKey("voice"):
+      result &= fmt"""[Голосовое сообщение {update["message"]["voice"]["duration"].getInt}сек] """
+  if use.findIt(it == "gif") != -1:
+    if update["message"].hasKey("animation"):
+      let g = update["message"]["animation"]
+      result &= fmt"""[GIF {g["fileName"].getStr} {g["mimeType"].getStr}] """
+  if use.findIt(it == "video_note") != -1:
+    if update["message"].hasKey("videoNote"):
+      result &= fmt"""[Видеосообщение {update["message"]["videoNote"]["duration"].getInt}сек] """
+  if use.findIt(it == "contact") != -1:
+    if update["message"].hasKey("contact"):
+      let c = update["message"]["contact"]
+      result &= fmt"""[Контакт {c["firstName"].getStr} {c["lastName"].getStr} {c["phoneNumber"].getStr}] """
+  if use.findIt(it == "contact") != -1:
+    if update["message"].hasKey("location"):
+      let geo = update["message"]["location"]
+      result &= fmt"""[Координаты {geo["latitude"].getFloat} {geo["longitude"].getFloat}] """
+  if use.findIt(it == "caption") != -1:
+    if update["message"].hasKey("caption") and update["message"]["caption"].getStr != "":
+      result &= fmt""" {update["message"]["caption"].getStr} """
 
 func keyValFetch*(mother: settiBox, word: string, def: string = ""): string = 
   let exs = mother.vklad.filterIt(it.key == word)
