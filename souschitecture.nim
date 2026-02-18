@@ -196,4 +196,5 @@ proc starrt() =
       echo "[fall] poll"
       sleep(5000)
 
-starrt()
+try: starrt()
+except Exception as e: echo "FATAL ERROR"; discard stdin.readLine()

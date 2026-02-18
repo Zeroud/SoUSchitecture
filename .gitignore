@@ -7,3 +7,5 @@ nimcache/
 *.dylib
 *.out
 *.jsonl
+*.bin
+*.pdb
