@@ -32,10 +32,10 @@ proc doRound[T](word: string): seq[T] =
         echo "[typeERR] ты не можешь вернуть JsonArray в ", $seq[T]; return @[]
       else:
         randomize()
-        result =  parseJson( sample( readFile(word.replace(re"readAnJsonl\(|\)", "")).splitLines.toSeq ))["messages"].toSeq
+        result =  parseJson( sample( readFile("src/" & word.replace(re"readAnJsonl\(|\)", "")).splitLines.toSeq ))["messages"].toSeq
     of "readAllJsonl":
       when T is JsonNode:
-        result = (readFile(  word.replace(re"readAllJsonl\(|\)", "") ).splitLines.toSeq).mapIt( (parseJson it)["messages"].toSeq).concat
+        result = (readFile("src/" & word.replace(re"readAllJsonl\(|\)", "") ).splitLines.toSeq).mapIt( (parseJson it)["messages"].toSeq).concat
       else:
         echo "[typeERR] ты не можешь вернуть JsonArray в ", $seq[T] ; return @[]
     else:

@@ -1,6 +1,6 @@
 # Package
 
-version       = "0.1.0"
+version       = "0.1.2"
 author        = "zeroud_"
 description   = "че за херню я написал"
 license       = "MIT"
@@ -11,6 +11,5 @@ bin           = @["souschitecture"]
 
 requires "nim >= 2.2.6"
 
-requires "telebot >= 2025.02.22"
 requires "tinyre >= 1.6.0"
 requires "flatty >= 0.3.4"
