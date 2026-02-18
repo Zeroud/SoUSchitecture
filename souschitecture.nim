@@ -194,6 +194,7 @@ proc starrt() =
     except Exception as e:
       echo $e.msg
       echo "[fall] poll"
+      offset += 1        # или запомнить счётчик retry и сдвинуть offset после N неудач
       sleep(5000)
 
 try: starrt()
