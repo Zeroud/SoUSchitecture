@@ -1,4 +1,4 @@
-import std/[httpclient, json, net, random, strformat, os, sequtils, unicode, strutils]
+import std/[httpclient, json, net, random, strformat, os, sequtils, unicode, strutils, asyncdispatch]
 import sousConf, tinyre, sousHelpers, pipeline
 
 const TG_BASE = "https://api.telegram.org/bot"
@@ -7,20 +7,19 @@ createDir("src")
 block: (let f = open("src/longSous.json", fmAppend); f.close())
 block: (let f = open("src/.backup", fmAppend); f.close())
 
-let config = getConfigPls()
+var config = getConfigPls()
 
-proc tg(token, meth: string, body: JsonNode = newJObject()): JsonNode =
-  let client = newHttpClient(timeout = 450_000)
+proc tg(token, meth: string, body: JsonNode = newJObject()): Future[JsonNode] {. async .} =
+  let client = newAsyncHttpClient()
   client.headers = newHttpHeaders({"Content-Type": "application/json"})
   defer: client.close()
-  let resp = client.request(TG_BASE & token & "/" & meth,
+  let resp = await client.request(TG_BASE & token & "/" & meth,
     httpMethod = HttpPost, body = $body)
-  result = parseJson(resp.body)
+  result = parseJson(await resp.body)
 
-proc processUpdate(token, botUsername: string, update: JsonNode) =
+proc processUpdate(token, botUsername: string, update: JsonNode, conf: seq[settiBox]) {. async .} =
   randomize()
 
-  let conf = getConfigPls()
   let confInit = conf.filterIt(it.name == "Init")[0]
   let confMemory = conf.filterIt(it.name == "Memory")[0]
 
@@ -81,8 +80,6 @@ proc processUpdate(token, botUsername: string, update: JsonNode) =
         echo "[!] скип"
         return
 
-    # NB: если inputDataCompile использует типы telebot —
-    # замените второй аргумент на нужные поля из update (JsonNode)
     var text = msgText & inputDataCompile(flagIn, update)
     if text == "":
       echo fmt"[!] ничего"
@@ -97,7 +94,7 @@ proc processUpdate(token, botUsername: string, update: JsonNode) =
 
     var memSous: seq[JsonNode] = (parseJson readFile "src/longSous.json").toSeq
 
-    let sous = newHttpClient()
+    let sous = newAsyncHttpClient()
     sous.headers = newHttpHeaders({
       "Authorization": "Bearer " & SOUS_KEY,
       "Content-Type": "application/json"
@@ -121,11 +118,11 @@ proc processUpdate(token, botUsername: string, update: JsonNode) =
       body[pair.key] = pair.val
     echo "[body] ", body
 
-    let reply = sous.request(SOUS_URL, httpMethod = HttpPost, body = $body)
+    let reply = await sous.request(SOUS_URL, httpMethod = HttpPost, body = $body)
 
-    var sendTex = $reply.body
+    var sendTex = await reply.body
     try:
-      sendTex = parseJson(reply.body)["choices"][0]["message"]["content"].getStr()
+      sendTex = parseJson(sendTex)["choices"][0]["message"]["content"].getStr()
     except Exception:
       echo "[!] ошибка? "
 
@@ -163,7 +160,7 @@ proc processUpdate(token, botUsername: string, update: JsonNode) =
       echo "[!] не удалось отправить ошибку: ", e.msg
 
 
-proc starrt() =
+proc startCore() {. async .} =
   let API_KEY = config.filterIt(it.name == "Init")[0]
                       .vklad.filterIt(it.key == "telegramKey")[0].va
   if API_KEY == "":
@@ -171,7 +168,7 @@ proc starrt() =
     discard readLine(stdin)
     return
 
-  let meResp = tg(API_KEY, "getMe")
+  let meResp = await tg(API_KEY, "getMe")
   echo meResp
   let botUsername = meResp["result"]["username"].getStr()
 
@@ -181,21 +178,38 @@ proc starrt() =
 
   while true:
     try:
-      let resp = tg(API_KEY, "getUpdates", %*{
+      let resp = await tg(API_KEY, "getUpdates", %*{
         "offset": offset,
         "timeout": 400
       })
 
       if resp.hasKey("result") and resp["result"].kind == JArray:
+        var tasks: seq[Future[void]] = @[]
         for update in resp["result"]:
           offset = update["update_id"].getBiggestInt() + 1
-          processUpdate(API_KEY, botUsername, update)
+          tasks.add(processUpdate(API_KEY, botUsername, update, config))
+        if tasks.len > 0:
+          await all(tasks)
 
     except Exception as e:
       echo $e.msg
       echo "[fall] poll"
-      offset += 1        # или запомнить счётчик retry и сдвинуть offset после N неудач
+      offset += 1      
       sleep(5000)
 
-try: starrt()
-except Exception as e: echo "FATAL ERROR"; discard stdin.readLine()
+
+
+proc main() {. async .} =
+
+  try: asyncCheck startCore()
+  except Exception as e: echo "FATAL CORE ERROR: ", e.msg; discard stdin.readLine(); quit(1)
+  
+  discard "еще че то там про gui" # зерот_, напоминаю, для смены конфига не нужно перезапускать core, поменяй var config
+  # да блять раньше напомнить не мог??
+
+
+
+
+
+asyncCheck main()
+runForever()
