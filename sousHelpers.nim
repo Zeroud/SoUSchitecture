@@ -26,14 +26,14 @@ proc inputDataCompile*(use: settiSeq, update: JsonNode): string =
     if update["message"].hasKey("animation"):
       let g = update["message"]["animation"]
       result &= fmt"""[GIF {g["fileName"].getStr} {g["mimeType"].getStr}] """
-  if use.findIt(it == "video_note") != -1:
+  if use.findIt(it == "videoNote") != -1:
     if update["message"].hasKey("videoNote"):
       result &= fmt"""[Видеосообщение {update["message"]["videoNote"]["duration"].getInt}сек] """
   if use.findIt(it == "contact") != -1:
     if update["message"].hasKey("contact"):
       let c = update["message"]["contact"]
       result &= fmt"""[Контакт {c["firstName"].getStr} {c["lastName"].getStr} {c["phoneNumber"].getStr}] """
-  if use.findIt(it == "contact") != -1:
+  if use.findIt(it == "location") != -1:
     if update["message"].hasKey("location"):
       let geo = update["message"]["location"]
       result &= fmt"""[Координаты {geo["latitude"].getFloat} {geo["longitude"].getFloat}] """

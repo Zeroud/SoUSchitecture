@@ -7,7 +7,7 @@ createDir("src")
 block: (let f = open("src/longSous.json", fmAppend); f.close())
 block: (let f = open("src/.backup", fmAppend); f.close())
 
-var config = getConfigPls()
+var config: seq[settiBox] 
 
 proc tg(token, meth: string, body: JsonNode = newJObject()): Future[JsonNode] {. async .} =
   let client = newAsyncHttpClient()
@@ -208,8 +208,17 @@ proc main() {. async .} =
   # да блять раньше напомнить не мог??
 
 
+#_______________________________________#
+proc reConfig() =
+  config = getConfigPls()
+proc startSous() =
+  asyncCheck main()
+  runForever()
+#_______________________________________#
 
 
-
-asyncCheck main()
-runForever()
+when appType == "gui":
+  include sousGui
+else:
+  reConfig()
+  startSous()
