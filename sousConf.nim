@@ -90,7 +90,7 @@ proc getConfigPls*(): seq[settiBox] {.gcsafe.} =
           let closingIdx = findIt(remainingLines, it == "```")
           
           if closingIdx != -1:
-            let pipeLines = remainingLines[0 .. closingIdx - 1]
+            let pipeLines = remainingLines[0 .. closingIdx - 1].filterIt(it != "")
             curBox[].vkladPipes = pipeLines
           else:
             echo "[!] Ошибка: у вас какашек в небе нехватает в конфигурации."

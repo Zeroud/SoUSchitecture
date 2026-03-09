@@ -8,6 +8,7 @@ block: (let f = open("src/longSous.json", fmAppend); f.close())
 block: (let f = open("src/.backup", fmAppend); f.close())
 
 var config: seq[settiBox] 
+var коробОшибок: seq[string]
 
 proc tg(token, meth: string, body: JsonNode = newJObject()): Future[JsonNode] {. async .} =
   let client = newAsyncHttpClient()
@@ -165,7 +166,7 @@ proc startCore() {. async .} =
                       .vklad.filterIt(it.key == "telegramKey")[0].va
   if API_KEY == "":
     echo "[X] нет ключа телеграм апи"
-    discard readLine(stdin)
+    when appType != "gui": discard readLine(stdin) else: коробОшибок.add "нет ключа Init > telegram Api"
     return
 
   let meResp = await tg(API_KEY, "getMe")
@@ -202,7 +203,13 @@ proc startCore() {. async .} =
 proc main() {. async .} =
 
   try: asyncCheck startCore()
-  except Exception as e: echo "FATAL CORE ERROR: ", e.msg; discard stdin.readLine(); quit(1)
+  except Exception as e:
+    echo "FATAL CORE ERROR: ", e.msg
+    when appType != "gui":
+      discard readLine(stdin) 
+    else: 
+      коробОшибок.add "FATAL CORE ERROR: " & e.msg
+    quit(1)
   
   discard "еще че то там про gui" # зерот_, напоминаю, для смены конфига не нужно перезапускать core, поменяй var config
   # да блять раньше напомнить не мог??
@@ -212,8 +219,8 @@ proc main() {. async .} =
 proc reConfig() =
   config = getConfigPls()
 proc startSous() =
+  reConfig()
   asyncCheck main()
-  runForever()
 #_______________________________________#
 
 
@@ -222,3 +229,4 @@ when appType == "gui":
 else:
   reConfig()
   startSous()
+  runForever()
