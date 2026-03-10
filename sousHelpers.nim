@@ -6,11 +6,11 @@ proc inputDataCompile*(use: settiSeq, update: JsonNode): string =
       result &= fmt"""[Стикер {update["message"]["sticker"]["emoji"].getStr}]"""
   if use.findIt(it == "photo") != -1:
     if update["message"].hasKey("photo") and update["message"]["photo"].len != 0:
-      result &= update["message"]["photo"].getElems.mapIt(fmt"""[Фото {it["fileSize"].getInt}байт] """).join(", ")
+      result &= update["message"]["photo"].getElems.mapIt(fmt"""[Фото {it["file_size"].getInt}байт] """).join(", ")
   if use.findIt(it == "video") != -1:
     if update["message"].hasKey("video"):
       let v = update["message"]["video"]
-      result &= fmt"""[Видео {v["fileName"].getStr} {v["duration"].getInt}сек {v["fileSize"].getInt}байт {v["mimeType"].getStr} ] """
+      result &= fmt"""[Видео {v["file_name"].getStr} {v["duration"].getInt}сек {v["file_size"].getInt}байт {v["mime_type"].getStr} ] """
   if use.findIt(it == "audio") != -1:
     if update["message"].hasKey("audio"):
       let a = update["message"]["audio"]
@@ -18,21 +18,21 @@ proc inputDataCompile*(use: settiSeq, update: JsonNode): string =
   if use.findIt(it == "document") != -1:
     if update["message"].hasKey("document"):
       let d = update["message"]["document"]
-      result &= fmt"""[Файл {d["fileName"].getStr} {d["fileSize"].getInt}байт] """
+      result &= fmt"""[Файл {d["file_name"].getStr} {d["file_size"].getInt}байт] """
   if use.findIt(it == "voice") != -1:
     if update["message"].hasKey("voice"):
       result &= fmt"""[Голосовое сообщение {update["message"]["voice"]["duration"].getInt}сек] """
   if use.findIt(it == "gif") != -1:
     if update["message"].hasKey("animation"):
       let g = update["message"]["animation"]
-      result &= fmt"""[GIF {g["fileName"].getStr} {g["mimeType"].getStr}] """
+      result &= fmt"""[GIF {g["file_name"].getStr} {g["mime_type"].getStr}] """
   if use.findIt(it == "videoNote") != -1:
-    if update["message"].hasKey("videoNote"):
-      result &= fmt"""[Видеосообщение {update["message"]["videoNote"]["duration"].getInt}сек] """
+    if update["message"].hasKey("video_note"):
+      result &= fmt"""[Видеосообщение {update["message"]["video_note"]["duration"].getInt}сек] """
   if use.findIt(it == "contact") != -1:
     if update["message"].hasKey("contact"):
       let c = update["message"]["contact"]
-      result &= fmt"""[Контакт {c["firstName"].getStr} {c["lastName"].getStr} {c["phoneNumber"].getStr}] """
+      result &= fmt"""[Контакт {c["first_name"].getStr} {c["last_name"].getStr} {c["phone_number"].getStr}] """
   if use.findIt(it == "location") != -1:
     if update["message"].hasKey("location"):
       let geo = update["message"]["location"]

@@ -56,6 +56,7 @@ proc processUpdate(token, botUsername: string, update: JsonNode, conf: seq[setti
     let chatId = message["chat"]["id"].getBiggestInt()
     let messageId = message["message_id"].getInt()
     let msgText = if message.hasKey("text"): message["text"].getStr() else: ""
+    let userWho = message{"from"}{"first_name"}.getStr & ": "
 
     let replyTo = message{"reply_to_message"}
     if not replyTo.isNil and replyTo.kind != JNull:
@@ -81,7 +82,7 @@ proc processUpdate(token, botUsername: string, update: JsonNode, conf: seq[setti
         echo "[!] скип"
         return
 
-    var text = msgText & inputDataCompile(flagIn, update)
+    var text = userWho & msgText & inputDataCompile(flagIn, update)
     if text == "":
       echo fmt"[!] ничего"
       return
