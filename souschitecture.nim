@@ -10,6 +10,8 @@ block: (let f = open("src/.backup", fmAppend); f.close())
 var config: seq[settiBox] 
 var коробОшибок: seq[string]
 
+var autoRestart = false
+
 proc tg(token, meth: string, body: JsonNode = newJObject()): Future[JsonNode] {. async .} =
   let client = newAsyncHttpClient()
   client.headers = newHttpHeaders({"Content-Type": "application/json"})
@@ -42,6 +44,8 @@ proc processUpdate(token, botUsername: string, update: JsonNode, conf: seq[setti
   var cut = keyValFetch(confInput, "cut", "1000").parseInt
   var inCut = keyValFetch(confMemory, "inCut", "1000").parseInt
   var outCut = keyValFetch(confMemory, "outCut", "1000").parseInt
+
+  var errorSharing = if confInit.vkladSeq.findIt(it == "errorSharing") != -1: true else: false
 
   if rate < 0:
     rate = 0
@@ -150,16 +154,19 @@ proc processUpdate(token, botUsername: string, update: JsonNode, conf: seq[setti
     sous.close()
 
   except Exception as e:
-    try:
-      let chatId = update["message"]["chat"]["id"].getBiggestInt()
-      let messageId = update["message"]["message_id"].getInt()
-      discard tg(token, "sendMessage", %*{
-        "chat_id": chatId,
-        "text": $e.msg,
-        "reply_parameters": %*{"message_id": messageId}
-      })
-    except:
-      echo "[!] не удалось отправить ошибку: ", e.msg
+    if errorSharing:
+      try:
+        let chatId = update["message"]["chat"]["id"].getBiggestInt()
+        let messageId = update["message"]["message_id"].getInt()
+        discard tg(token, "sendMessage", %*{
+          "chat_id": chatId,
+          "text": $e.msg,
+          "reply_parameters": %*{"message_id": messageId}
+        })
+      except:
+        echo "[!] не удалось отправить ошибку: ", e.msg
+    else:
+      echo "[!] ошибка: ", e.msg
 
 
 proc startCore() {. async .} =
@@ -197,7 +204,12 @@ proc startCore() {. async .} =
       echo $e.msg
       echo "[fall] poll"
       offset += 1      
-      sleep(5000)
+      await sleepAsync(5000)
+      if not autoRestart:  
+        break
+      else:
+        echo "[restart] poll"
+
 
 
 
@@ -211,14 +223,12 @@ proc main() {. async .} =
     else: 
       коробОшибок.add "FATAL CORE ERROR: " & e.msg
     quit(1)
-  
-  discard "еще че то там про gui" # зерот_, напоминаю, для смены конфига не нужно перезапускать core, поменяй var config
-  # да блять раньше напомнить не мог??
 
 
 #_______________________________________#
 proc reConfig() =
   config = getConfigPls()
+  autoRestart = config.filterIt(it.name == "Init")[0].vkladSeq.findIt(it == "autoRestart") != -1
 proc startSous() =
   reConfig()
   asyncCheck main()
@@ -228,6 +238,5 @@ proc startSous() =
 when appType == "gui":
   include sousGui
 else:
-  reConfig()
   startSous()
   runForever()

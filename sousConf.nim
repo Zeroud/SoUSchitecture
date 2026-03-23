@@ -120,6 +120,8 @@ concat[] prompt
 concat[] input
 ```
 
+* sticker
+
 ## answer
 
 ```json
@@ -134,6 +136,10 @@ __apiUrl__
 __apiModel__ 
 
 __apiKey__ 
+
+* errorSharing
+
+* autoRestart
 
 # Memory
 __lenght__ 0""")

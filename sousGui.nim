@@ -1,4 +1,6 @@
-import nigui, sugar
+import nigui, sugar, nigui/msgBox
+
+const NimblePkgVersion {.strdefine.} = "unknown"
 
 var running = true
 
@@ -6,26 +8,30 @@ let conFile = "src/sousSett.md"
 
 app.init()
 
-var w = newWindow("SoUSchitecture")
+var w = newWindow("SoUSchitecture v" & NimblePkgVersion)
 w.iconPath = "SoUSchitecture.png"
-w.height = 700
-w.width = 400
+w.height = 730
+w.width = 410
 w.resizable = true
 
 var c = newLayoutContainer(Layout_Vertical)
-c.widthMode = WidthMode_Fill         
+c.widthMode = WidthMode_Fill  
+c.heightMode = HeightMode_Fill
+c.yAlign = YAlign_Top       
 c.backgroundColor = Color(red: 200, green: 220, blue: 250)
 
 ############################################
 
 
+
 var макушка = newLayoutContainer(Layout_Horizontal)
 макушка.widthMode = WidthMode_Fill
 макушка.xAlign = XAlign_Center
-макушка.backgroundColor = Color(red: 255, green: 101, blue: 69)
+макушка.backgroundColor = Color(red: 240, green: 86, blue: 54)
 макушка.spacing = 15
 макушка.padding = 10             
 c.add(макушка)
+
 
 
 var запуск = newButton("►")
@@ -61,12 +67,12 @@ proc genSetting(cont: Container, s: setti) =
   l.widthMode = WidthMode_Fill       
   l.height = 30
   l.spacing = 10
-  l.backgroundColor = Color(red: 255, green: 101, blue: 69)
+  l.backgroundColor = Color(red: 240, green: 86, blue: 54)
 
   let k = newLabel(s.key)
   k.width = 100                      
   k.height = l.height
-  k.backgroundColor = Color(red: 255, green: 101, blue: 69)
+  k.backgroundColor = Color(red: 240, green: 86, blue: 54)
   k.xTextAlign = XTextAlign_Center
   k.yTextAlign = YTextAlign_Center
   k.fontSize = 15
@@ -81,20 +87,40 @@ proc genSetting(cont: Container, s: setti) =
 
 proc genSettings(cont: Container, s: settiSeq, parent: settiBox) =
   if parent.name == "input":
-    for i in @["sticker", "photo", "video", "audio", "document", "voice", "gif", "videoNote", "contact", "location", "caption"]:
+    for i in @["sticker", "photo", "video", "audio", "document", "voice", "gif", "video_note", "contact", "location", "caption"]:
       if s.findIt(it == i) != -1:
         let chB = newCheckBox(i)
         chB.checked = true
-        chB.backgroundColor = Color(red: 255, green: 101, blue: 69)
+        chB.backgroundColor = Color(red: 240, green: 86, blue: 54)
+        chB.widthMode = WidthMode_Fill  
+        chB.fontBold = true
         cont.add(chB)
       else:
         let chB = newCheckBox(i)
-        chB.backgroundColor = Color(red: 255, green: 101, blue: 69)
+        chB.backgroundColor = Color(red: 240, green: 86, blue: 54)
+        chB.widthMode = WidthMode_Fill  
+        chB.fontBold = true
+        cont.add(chB)
+  
+  if parent.name == "Init":
+    for i in @["errorSharing", "autoRestart"]:
+      if s.findIt(it == i) != -1:
+        let chB = newCheckBox(i)
+        chB.checked = true
+        chB.backgroundColor = Color(red: 240, green: 86, blue: 54)
+        chB.widthMode = WidthMode_Fill  
+        chB.fontBold = true
+        cont.add(chB)
+      else:
+        let chB = newCheckBox(i)
+        chB.backgroundColor = Color(red: 240, green: 86, blue: 54)
+        chB.widthMode = WidthMode_Fill  
+        chB.fontBold = true
         cont.add(chB)
       
 proc genJson(cont: Container, t: string) =
   let lab = newLabel("json:")
-  lab.backgroundColor = Color(red: 255, green: 101, blue: 69)
+  lab.backgroundColor = Color(red: 240, green: 86, blue: 54)
   let area = newTextArea(t)
   area.widthMode = WidthMode_Fill
   cont.add(lab)
@@ -102,7 +128,7 @@ proc genJson(cont: Container, t: string) =
 
 proc genPipes(cont: Container, ps: seq[string]) =
   let lab = newLabel("pipeline:")
-  lab.backgroundColor = Color(red: 255, green: 101, blue: 69)
+  lab.backgroundColor = Color(red: 240, green: 86, blue: 54)
   let area = newTextArea()
   for i in ps:
     area.addLine(i)
@@ -133,7 +159,7 @@ proc genDropper(cont: Container, box: settiBox) =
     dropper.genSetting(i)
   for i in box.boxInBox:
     genDropper(dropper, i)
-  if box.vkladSeq.len != 0:
+  if box.vkladSeq.len != 0 or  box.name != "Init" or box.name != "input":
     dropper.genSettings(box.vkladSeq, box)
   if box.vkladJson != "":
     dropper.genJson(box.vkladJson)
@@ -193,7 +219,8 @@ let идеальныйКонфиг = @[
       (key: "apiKey", va: ""),
       (key: "apiModel", va: ""),
       (key: "apiUrl", va: ""),
-    ]
+    ],
+    vkladSeq: @[]
     ),
   settiBox(
     name: "Telebot",
@@ -231,6 +258,7 @@ let идеальныйКонфиг = @[
 mergeConfigs(конфиг, идеальныйКонфиг)
 
 
+
 for i in конфиг:
   let подДроппер = newLayoutContainer(Layout_Vertical)
   подДроппер.widthMode = WidthMode_Fill       
@@ -238,6 +266,17 @@ for i in конфиг:
   подДроппер.backgroundColor = Color(red: 200, green: 220, blue: 250)
 
   genDropper(подДроппер, i)
+
+if конфиг.filterIt(it.name == "Init")[0].vklad.filterIt(it.key == "telegramKey" or it.key == "apiUrl")[0].va == "":
+  w.msgBox("""Похоже, это первый запуск программы
+  
+  Нажимая на кнопки можно раскрывать и скрывать настройки
+  Нажмите на Init и начиркайте в поля перед запуском
+
+  ► - запуск бота
+  ✔ - сохранение конфигурации
+  ▬ - сворачивание окна сбежало из панели сверху""")
+  
 
 proc indeparts(c: Container, deep: int): string =
   var protoConstruct = ""
@@ -286,4 +325,4 @@ while running:
   if hasPendingOperations():  
     poll(20)                 
   else:
-    sleep(100)                 
+    sleep(100)           

@@ -1,6 +1,6 @@
 # Package
 
-version       = "0.2.2"
+version       = "0.2.3"
 author        = "zeroud_"
 description   = "че за херню я написал"
 license       = "MIT"
